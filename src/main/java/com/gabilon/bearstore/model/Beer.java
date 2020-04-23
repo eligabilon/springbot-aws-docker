@@ -24,14 +24,14 @@ public class Beer {
     @EqualsAndHashCode.Include
     private Long id;
 
-    @NotBlank
+    @NotBlank(message = "beers-1")
     private String name;
 
-    @NotNull
-    @DecimalMin("0")
+    @NotNull(message = "beers-2")
+    @DecimalMin(value = "0", message = "beers-3")
     private BigDecimal volume;
 
-    @NotNull
+    @NotNull(message = "beers-4")
     private BeerType type;
 
     public enum BeerType {
