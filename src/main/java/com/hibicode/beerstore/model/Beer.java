@@ -1,9 +1,8 @@
-package com.gabilon.bearstore.model;
+package com.hibicode.beerstore.model;
 
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import javax.validation.constraints.DecimalMin;
@@ -11,15 +10,13 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
+@Data
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Beer {
 
     @Id
-    @SequenceGenerator(name="beer_seq", sequenceName = "beer_seq", allocationSize = 1)
+    @SequenceGenerator(name = "beer_seq", sequenceName = "beer_seq", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "beer_seq")
     @EqualsAndHashCode.Include
     private Long id;
@@ -28,16 +25,20 @@ public class Beer {
     private String name;
 
     @NotNull(message = "beers-2")
-    @DecimalMin(value = "0", message = "beers-3")
-    private BigDecimal volume;
-
-    @NotNull(message = "beers-4")
     private BeerType type;
 
-    public enum BeerType {
-        LAGER,
-        PILSEN,
-        IPA;
+    @NotNull(message = "beers-3")
+    @DecimalMin(value = "0", message = "beers-4")
+    private BigDecimal volume;
+
+    @JsonIgnore
+    public boolean isNew() {
+        return getId() == null;
+    }
+
+    @JsonIgnore
+    public boolean alreadyExist() {
+        return getId() != null;
     }
 
 }

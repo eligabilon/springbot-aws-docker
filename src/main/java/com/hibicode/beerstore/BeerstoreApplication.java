@@ -1,13 +1,12 @@
-package com.gabilon.bearstore;
+package com.hibicode.beerstore;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class BearstoreApplication {
+public class BeerstoreApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(BearstoreApplication.class, args);
+		SpringApplication.run(BeerstoreApplication.class, args);
 	}
-
 }

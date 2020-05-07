@@ -1,12 +1,15 @@
-package com.gabilon.bearstore.error;
+package com.hibicode.beerstore.error;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
-import  com.gabilon.bearstore.error.ErrorResponse.ApiErrors;
+import com.hibicode.beerstore.error.ErrorResponse.ApiError;
+import com.hibicode.beerstore.service.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.context.NoSuchMessageException;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.ObjectError;
@@ -16,23 +19,26 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.List;
 import java.util.Locale;
-import static java.util.stream.Collectors.toList;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.toList;
+
+@Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice
 @RequiredArgsConstructor
 public class ApiExceptionHandler {
 
-    private static final String NO_MESSAGE_AVAILABLE= "No message available";
-    private static final Logger LOG= LoggerFactory.getLogger(ApiExceptionHandler.class);
+    private static final String NO_MESSSAGE_AVAILABLE = "No message available";
+    private static final Logger LOG = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
-    private final MessageSource messageSource;
+    private final MessageSource apiErrorMessageSource;
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleNotValidException(MethodArgumentNotValidException exception, Locale locale){
+    public ResponseEntity<ErrorResponse> handleNotValidException(MethodArgumentNotValidException exception
+            , Locale locale) {
         Stream<ObjectError> errors = exception.getBindingResult().getAllErrors().stream();
 
-        List<ApiErrors> apiErrors = errors
+        List<ApiError> apiErrors = errors
                 .map(ObjectError::getDefaultMessage)
                 .map(code -> toApiError(code, locale))
                 .collect(toList());
@@ -42,21 +48,33 @@ public class ApiExceptionHandler {
     }
 
     @ExceptionHandler(InvalidFormatException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidFormatException(InvalidFormatException exception, Locale locale){
+    public ResponseEntity<ErrorResponse> handleInvalidFormatException(InvalidFormatException exception
+            , Locale locale) {
         final String errorCode = "generic-1";
         final HttpStatus status = HttpStatus.BAD_REQUEST;
         final ErrorResponse errorResponse = ErrorResponse.of(status, toApiError(errorCode, locale, exception.getValue()));
         return ResponseEntity.badRequest().body(errorResponse);
     }
 
-    private ApiErrors toApiError(String code, Locale locale, Object... args){
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException exception, Locale locale) {
+        final String errorCode = exception.getCode();
+        final HttpStatus status = exception.getStatus();
+
+        final ErrorResponse errorResponse = ErrorResponse.of(status, toApiError(errorCode, locale));
+        return ResponseEntity.badRequest().body(errorResponse);
+    }
+
+    public ApiError toApiError(String code, Locale locale, Object... args) {
         String message;
         try {
-            message = messageSource.getMessage(code, args, locale);
+            message = apiErrorMessageSource.getMessage(code, args, locale);
         } catch (NoSuchMessageException e) {
             LOG.error("Could not find any message for {} code under {} locale", code, locale);
-            message = NO_MESSAGE_AVAILABLE;
+            message = NO_MESSSAGE_AVAILABLE;
         }
-        return new ApiErrors(code, message);
+
+        return new ApiError(code, message);
     }
+
 }
